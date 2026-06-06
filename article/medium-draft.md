@@ -256,4 +256,4 @@ Kestra is available locally at `http://127.0.0.1:8082` with the demo credentials
 
 ## Author Note
 
-I built and reran this Docker lab from clean volumes, using AI assistance that I reviewed and finalized.
+I built this Docker lab with AI assistance and reviewed the final work.
