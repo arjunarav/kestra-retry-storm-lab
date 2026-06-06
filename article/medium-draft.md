@@ -34,54 +34,9 @@ The code blocks below are exact excerpts from the checked-in files, not invented
 
 ## How the Lab Creates a Retry Storm
 
-The parent flow creates one durable scenario row and then fans out 30 child executions. The `ForEach` task is allowed to launch all 30, and every `Subflow` waits for its child so the parent cannot collect metrics early.
+Each scenario has a parent flow and a client flow. The parent creates one durable scenario row, fans out 30 child executions with `ForEach`, waits for every `Subflow`, and collects metrics only after all children terminate. The client flow contains the retry policy being tested.
 
-```yaml
-- id: launch_clients
-  type: io.kestra.plugin.core.flow.ForEach
-  concurrencyLimit: 30
-  values:
-    - "01"
-    - "02"
-    - "03"
-    - "04"
-    - "05"
-    - "06"
-    - "07"
-    - "08"
-    - "09"
-    - "10"
-    - "11"
-    - "12"
-    - "13"
-    - "14"
-    - "15"
-    - "16"
-    - "17"
-    - "18"
-    - "19"
-    - "20"
-    - "21"
-    - "22"
-    - "23"
-    - "24"
-    - "25"
-    - "26"
-    - "27"
-    - "28"
-    - "29"
-    - "30"
-  tasks:
-    - id: run_client
-      type: io.kestra.plugin.core.flow.Subflow
-      namespace: retry-storm-lab
-      flowId: retry-client-independent
-      wait: true
-      transmitFailed: true
-      inputs:
-        run_id: "{{ inputs.run_id }}"
-        client_id: "client-{{ taskrun.value }}"
-```
+That split matters for the comparison. The parent workload is unchanged across scenarios. Only the client policy changes, so a lower request count cannot be explained by launching fewer clients or ending the run early. The complete parent flows are in the repository; the article concentrates on the policy code rather than printing the same 30 client values three times.
 
 The mock provider is deliberately stateful. Before `outage_until`, every request returns `503 scheduled_outage`. After that timestamp, the provider accepts at most five requests in the same wall-clock second. The sixth request returns `503 capacity_exceeded` and starts a 1.5-second cooldown. Requests arriving during the cooldown return `503 overload_cooldown`.
 
@@ -468,6 +423,8 @@ The other clean execution IDs were `5bLjJFkgP7jbAvZzCxBMnv` for independent retr
 
 Compared with independent retries, the layered policy reduced total requests by about 81 percent and eliminated overload responses in the clean run. I would not generalize that percentage beyond this experiment. The useful result is the shape: local backoff amplified synchronized work, the bulkhead reduced but did not regulate it, and shared admission plus dispatch pacing kept recovery below downstream capacity.
 
+The goal was not to make the recovery path as fast as possible. It was to complete recovery without creating another outage. The layered run reserved one request per second of provider headroom and still finished sooner than either uncoordinated policy because it did not keep pushing the provider back into cooldown.
+
 The intermediate failed design is also preserved as `results/development-dispatch-gap.json`. Its execution `1oXfqxEQufF6MFGmKBGYEC` completed all clients but peaked at nine requests per second and generated 25 overload responses. Keeping a failed result in the repository is less tidy than deleting it, but it documents why the dispatch cursor exists.
 
 ## Reproduce It
@@ -563,4 +520,4 @@ Before I add a retry now, I ask two questions: who else will retry at the same t
 
 ## Author Note
 
-I built and ran this lab locally in Docker, reset its volumes, and reran the complete package from the checked-in files before writing the final results. The repository includes the Kestra YAML, PostgreSQL functions, mock provider, execution runner, and measured output used in this article.
+I built and ran this lab locally in Docker, reset its volumes, and reran the complete package from the checked-in files before writing the final results. The repository includes the Kestra YAML, PostgreSQL functions, mock provider, execution runner, and measured output used in this article. I used AI assistance during drafting and implementation, then reviewed, debugged, reran, and finalized the work myself.
