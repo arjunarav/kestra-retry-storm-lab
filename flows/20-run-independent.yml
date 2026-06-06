@@ -1,0 +1,85 @@
+id: run-independent-retries
+namespace: retry-storm-lab
+description: Launches 30 executions that retry independently.
+
+inputs:
+  - id: run_id
+    type: STRING
+
+tasks:
+  - id: start_scenario
+    type: io.kestra.plugin.jdbc.postgresql.Query
+    url: jdbc:postgresql://postgres:5432/kestra
+    username: kestra
+    password: local-only-kestra
+    fetchType: FETCH_ONE
+    sql: |
+      select *
+      from retry_lab.start_run(
+        '{{ inputs.run_id }}',
+        'independent',
+        30,
+        8,
+        5,
+        1500,
+        5
+      );
+
+  - id: launch_clients
+    type: io.kestra.plugin.core.flow.ForEach
+    concurrencyLimit: 30
+    values:
+      - "01"
+      - "02"
+      - "03"
+      - "04"
+      - "05"
+      - "06"
+      - "07"
+      - "08"
+      - "09"
+      - "10"
+      - "11"
+      - "12"
+      - "13"
+      - "14"
+      - "15"
+      - "16"
+      - "17"
+      - "18"
+      - "19"
+      - "20"
+      - "21"
+      - "22"
+      - "23"
+      - "24"
+      - "25"
+      - "26"
+      - "27"
+      - "28"
+      - "29"
+      - "30"
+    tasks:
+      - id: run_client
+        type: io.kestra.plugin.core.flow.Subflow
+        namespace: retry-storm-lab
+        flowId: retry-client-independent
+        wait: true
+        transmitFailed: true
+        inputs:
+          run_id: "{{ inputs.run_id }}"
+          client_id: "client-{{ taskrun.value }}"
+
+  - id: collect_metrics
+    type: io.kestra.plugin.jdbc.postgresql.Query
+    url: jdbc:postgresql://postgres:5432/kestra
+    username: kestra
+    password: local-only-kestra
+    fetchType: FETCH_ONE
+    sql: "select * from retry_lab.metrics('{{ inputs.run_id }}');"
+
+outputs:
+  - id: metrics
+    type: JSON
+    value: "{{ outputs.collect_metrics.row }}"
+

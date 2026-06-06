@@ -1,0 +1,275 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Kestra retry-control architecture</title>
+  <style>
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      width: 1600px;
+      height: 900px;
+      overflow: hidden;
+      background: #f7f8fb;
+      color: #16181d;
+      font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    body { padding: 54px 64px 48px; }
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      height: 116px;
+      border-bottom: 2px solid #d9dde7;
+    }
+    .brand {
+      color: #6d36d8;
+      font-size: 24px;
+      font-weight: 800;
+    }
+    h1 {
+      margin: 8px 0 0;
+      font-size: 38px;
+      line-height: 1.08;
+      letter-spacing: 0;
+    }
+    .subtitle {
+      max-width: 500px;
+      margin-top: 34px;
+      color: #596171;
+      font-size: 18px;
+      text-align: right;
+      line-height: 1.4;
+    }
+    .lanes {
+      display: grid;
+      grid-template-columns: 230px 1fr 250px;
+      gap: 24px;
+      margin-top: 28px;
+    }
+    .lane-labels, .provider {
+      display: grid;
+      grid-template-rows: repeat(3, 150px);
+      gap: 20px;
+    }
+    .label {
+      padding: 22px 20px;
+      border-left: 6px solid;
+      background: #fff;
+      box-shadow: 0 4px 18px rgba(22, 24, 29, 0.06);
+    }
+    .label strong {
+      display: block;
+      font-size: 20px;
+      margin-bottom: 8px;
+    }
+    .label span {
+      color: #636b7a;
+      font-size: 15px;
+      line-height: 1.4;
+    }
+    .red { border-color: #d94c4c; }
+    .amber { border-color: #df8c20; }
+    .green { border-color: #27956d; }
+    .lane {
+      position: relative;
+      display: grid;
+      grid-template-columns: 1fr 62px 1fr 62px 1fr;
+      align-items: center;
+      min-height: 150px;
+      padding: 20px 24px;
+      border: 1px solid #dfe3eb;
+      background: #fff;
+    }
+    .node {
+      min-height: 86px;
+      padding: 16px;
+      border: 2px solid #bfc6d4;
+      background: #fbfcfe;
+    }
+    .node strong {
+      display: block;
+      font-size: 17px;
+      margin-bottom: 7px;
+    }
+    .node span {
+      display: block;
+      color: #626b79;
+      font-size: 13px;
+      line-height: 1.35;
+    }
+    .node.kestra { border-color: #8151dc; background: #f8f4ff; }
+    .node.danger { border-color: #d94c4c; background: #fff5f5; }
+    .node.warn { border-color: #df8c20; background: #fff9ef; }
+    .node.safe { border-color: #27956d; background: #f2fbf7; }
+    .arrow {
+      color: #767f8e;
+      font-size: 34px;
+      text-align: center;
+    }
+    .provider .service {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 22px;
+      border: 2px solid #2f3a4b;
+      background: #fff;
+    }
+    .service strong { font-size: 19px; margin-bottom: 8px; }
+    .service span { color: #606979; font-size: 14px; line-height: 1.4; }
+    .service b { color: #d94c4c; font-size: 14px; margin-top: 10px; }
+    .state {
+      display: grid;
+      grid-template-columns: 230px 1fr 250px;
+      gap: 24px;
+      margin-top: 24px;
+      height: 126px;
+    }
+    .state-title {
+      display: flex;
+      align-items: center;
+      padding: 0 20px;
+      color: #fff;
+      background: #222833;
+      font-size: 20px;
+      font-weight: 700;
+    }
+    .database {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      align-items: center;
+      gap: 18px;
+      padding: 20px 24px;
+      border: 2px solid #2e7d62;
+      background: #edf8f3;
+    }
+    .database div {
+      padding-left: 14px;
+      border-left: 3px solid #55aa89;
+    }
+    .database strong { display: block; font-size: 15px; }
+    .database span { color: #4c675d; font-size: 12px; }
+    .proof {
+      display: flex;
+      align-items: center;
+      padding: 20px;
+      border: 2px solid #27956d;
+      background: #fff;
+      color: #1b654d;
+      font-weight: 750;
+      line-height: 1.45;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div>
+      <div class="brand">kestra.</div>
+      <h1>Three retry policies, one downstream limit</h1>
+    </div>
+    <div class="subtitle">
+      Thirty Subflow executions recover from the same eight-second outage.
+      Only the layered path coordinates network dispatch.
+    </div>
+  </header>
+
+  <section class="lanes">
+    <div class="lane-labels">
+      <div class="label red">
+        <strong>1. Local retries</strong>
+        <span>Each execution owns its retry clock. Correct locally, synchronized globally.</span>
+      </div>
+      <div class="label amber">
+        <strong>2. Bulkhead only</strong>
+        <span>Five active executions. Lower blast radius, but no request-rate contract.</span>
+      </div>
+      <div class="label green">
+        <strong>3. Layered policy</strong>
+        <span>Bulkhead, circuit, admission budget, and durable dispatch spacing.</span>
+      </div>
+    </div>
+
+    <div>
+      <div class="lane">
+        <div class="node kestra">
+          <strong>30 Kestra executions</strong>
+          <span>HTTP Request with exponential backoff</span>
+        </div>
+        <div class="arrow">&rarr;</div>
+        <div class="node danger">
+          <strong>Independent clocks</strong>
+          <span>Retry waves align after the outage</span>
+        </div>
+        <div class="arrow">&rarr;</div>
+        <div class="node danger">
+          <strong>30 req/s peak</strong>
+          <span>70 overload responses</span>
+        </div>
+      </div>
+      <div class="lane" style="margin-top:20px">
+        <div class="node kestra">
+          <strong>Queued executions</strong>
+          <span>Kestra concurrency behavior: QUEUE</span>
+        </div>
+        <div class="arrow">&rarr;</div>
+        <div class="node warn">
+          <strong>Five active</strong>
+          <span>Controls work in flight, not requests per second</span>
+        </div>
+        <div class="arrow">&rarr;</div>
+        <div class="node warn">
+          <strong>10 req/s peak</strong>
+          <span>40 overload responses</span>
+        </div>
+      </div>
+      <div class="lane" style="margin-top:20px">
+        <div class="node kestra">
+          <strong>Five active</strong>
+          <span>LoopUntil asks for shared permission</span>
+        </div>
+        <div class="arrow">&rarr;</div>
+        <div class="node safe">
+          <strong>Circuit + 4 permits/s</strong>
+          <span>One probe lease; other executions defer</span>
+        </div>
+        <div class="arrow">&rarr;</div>
+        <div class="node safe">
+          <strong>250 ms dispatch slots</strong>
+          <span>Actual network calls remain paced</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="provider">
+      <div class="service">
+        <strong>Fault-injection API</strong>
+        <span>Eight-second scheduled outage</span>
+        <b>Capacity: 5 requests/s</b>
+      </div>
+      <div class="service">
+        <strong>Same provider</strong>
+        <span>Five-request/s capacity and 1.5-second overload cooldown</span>
+        <b>Concurrency is not rate limiting</b>
+      </div>
+      <div class="service">
+        <strong>Same provider</strong>
+        <span>Dispatch remains below capacity after recovery</span>
+        <b style="color:#237a5c">Zero overload responses</b>
+      </div>
+    </div>
+  </section>
+
+  <section class="state">
+    <div class="state-title">PostgreSQL shared state</div>
+    <div class="database">
+      <div><strong>Circuit state</strong><span>CLOSED / OPEN / HALF_OPEN</span></div>
+      <div><strong>Probe lease</strong><span>One recovery owner</span></div>
+      <div><strong>Retry budget</strong><span>Atomic permits</span></div>
+      <div><strong>Decision ledger</strong><span>Append-only evidence</span></div>
+    </div>
+    <div class="proof">Kestra owns orchestration.<br>PostgreSQL owns atomic coordination.</div>
+  </section>
+</body>
+</html>
+

@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Kestra retry storm results</title>
+  <style>
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      width: 1600px;
+      height: 900px;
+      overflow: hidden;
+      background: #f7f8fb;
+      color: #171a20;
+      font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    body { padding: 58px 72px; }
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      padding-bottom: 30px;
+      border-bottom: 2px solid #d9dde7;
+    }
+    .brand { color: #6d36d8; font-size: 24px; font-weight: 800; }
+    h1 { margin: 8px 0 0; font-size: 42px; letter-spacing: 0; }
+    header p {
+      width: 520px;
+      margin: 0;
+      color: #5c6473;
+      font-size: 18px;
+      line-height: 1.45;
+      text-align: right;
+    }
+    .metric-head, .row {
+      display: grid;
+      grid-template-columns: 260px 1fr 150px 150px 160px;
+      gap: 24px;
+      align-items: center;
+    }
+    .metric-head {
+      height: 70px;
+      color: #697282;
+      font-size: 14px;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+    .row {
+      min-height: 174px;
+      padding: 24px 0;
+      border-top: 1px solid #dfe3eb;
+    }
+    .strategy strong {
+      display: block;
+      font-size: 23px;
+      line-height: 1.2;
+      margin-bottom: 7px;
+    }
+    .strategy span { color: #667080; font-size: 14px; line-height: 1.4; }
+    .bar-track {
+      height: 52px;
+      background: #e8ebf1;
+      position: relative;
+    }
+    .bar {
+      height: 52px;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      min-width: 78px;
+      padding-right: 14px;
+      color: #fff;
+      font-size: 19px;
+      font-weight: 800;
+    }
+    .bar.red { width: 100%; background: #d94c4c; }
+    .bar.amber { width: 43.3%; background: #df8c20; }
+    .bar.green { width: 19%; background: #27956d; }
+    .number strong { display: block; font-size: 31px; line-height: 1; }
+    .number span { display: block; color: #687181; font-size: 13px; margin-top: 8px; }
+    .zero { color: #237a5c; }
+    .footer {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 30px;
+      margin-top: 28px;
+      padding-top: 26px;
+      border-top: 2px solid #d9dde7;
+    }
+    .footer div { border-left: 5px solid #6d36d8; padding-left: 18px; }
+    .footer strong { display: block; font-size: 24px; }
+    .footer span { color: #616a79; font-size: 14px; }
+  </style>
+</head>
+<body>
+  <header>
+    <div>
+      <div class="brand">kestra.</div>
+      <h1>Recovery traffic became the failure</h1>
+    </div>
+    <p>
+      Clean Docker run, 30 clients, eight-second outage,
+      five-request/s downstream capacity.
+    </p>
+  </header>
+
+  <div class="metric-head">
+    <div>Strategy</div>
+    <div>Total requests</div>
+    <div>Peak RPS</div>
+    <div>Amplification</div>
+    <div>Overload</div>
+  </div>
+
+  <section class="row">
+    <div class="strategy">
+      <strong>Independent retries</strong>
+      <span>Thirty execution-local exponential retry clocks</span>
+    </div>
+    <div class="bar-track"><div class="bar red">231</div></div>
+    <div class="number"><strong>30</strong><span>requests/s</span></div>
+    <div class="number"><strong>7.70x</strong><span>requests/success</span></div>
+    <div class="number"><strong>70</strong><span>responses</span></div>
+  </section>
+
+  <section class="row">
+    <div class="strategy">
+      <strong>Bulkhead only</strong>
+      <span>Five active executions, remaining work queued</span>
+    </div>
+    <div class="bar-track"><div class="bar amber">100</div></div>
+    <div class="number"><strong>10</strong><span>requests/s</span></div>
+    <div class="number"><strong>3.33x</strong><span>requests/success</span></div>
+    <div class="number"><strong>40</strong><span>responses</span></div>
+  </section>
+
+  <section class="row">
+    <div class="strategy">
+      <strong>Layered policy</strong>
+      <span>Bulkhead, circuit, retry budget, durable dispatch slots</span>
+    </div>
+    <div class="bar-track"><div class="bar green">44</div></div>
+    <div class="number"><strong>4</strong><span>requests/s</span></div>
+    <div class="number"><strong>1.47x</strong><span>requests/success</span></div>
+    <div class="number zero"><strong>0</strong><span>responses</span></div>
+  </section>
+
+  <div class="footer">
+    <div><strong>30 / 30</strong><span>clients completed in every scenario</span></div>
+    <div><strong>81%</strong><span>fewer requests than independent retries</span></div>
+    <div><strong>11.685 s</strong><span>recovery delay with layered control</span></div>
+  </div>
+</body>
+</html>

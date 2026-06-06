@@ -1,0 +1,4 @@
+strategy,execution_id,total_requests,failed_requests,peak_rps,retry_amplification,overload_responses,recovery_delay_ms,run_duration_ms
+independent,5bLjJFkgP7jbAvZzCxBMnv,231,201,30,7.70,70,18451,26451
+bounded,5lxH7qY7ADFEqDBXAygv1f,100,70,10,3.33,40,16974,24974
+global_budget,2plUaoV3Ds5hiykILUsghw,44,14,4,1.47,0,11685,19685

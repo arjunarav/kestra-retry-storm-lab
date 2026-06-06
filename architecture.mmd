@@ -1,0 +1,27 @@
+flowchart LR
+    P["Kestra parent flow<br/>30 Subflow executions"]
+
+    subgraph S1["Strategy 1: local retries"]
+        L["Each execution<br/>retries independently"]
+    end
+
+    subgraph S2["Strategy 2: bulkhead only"]
+        B["Flow concurrency<br/>limit = 5"]
+    end
+
+    subgraph S3["Strategy 3: layered policy"]
+        C["Flow concurrency<br/>limit = 5"]
+        G["PostgreSQL coordinator<br/>circuit + 4 permits/s"]
+        R["Durable dispatch slots<br/>250 ms spacing"]
+        C --> G --> R
+    end
+
+    A["Fault-injection API<br/>8 s outage, 5 req/s capacity"]
+    D[("PostgreSQL<br/>requests, decisions, metrics")]
+
+    P --> L --> A
+    P --> B --> A
+    P --> C
+    R --> A
+    A --> D
+    G <--> D

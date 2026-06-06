@@ -1,0 +1,83 @@
+id: retry-client-global-budget
+namespace: retry-storm-lab
+description: A client governed by a shared retry budget and circuit breaker.
+
+concurrency:
+  behavior: QUEUE
+  limit: 5
+
+inputs:
+  - id: run_id
+    type: STRING
+  - id: client_id
+    type: STRING
+
+tasks:
+  - id: coordinate_recovery
+    type: io.kestra.plugin.core.flow.LoopUntil
+    condition: "{{ outputs.check_completion.row.completed == true }}"
+    failOnMaxReached: true
+    checkFrequency:
+      interval: PT0.1S
+      maxDuration: PT3M
+      maxIterations: 360
+    tasks:
+      - id: acquire_permission
+        type: io.kestra.plugin.jdbc.postgresql.Query
+        url: jdbc:postgresql://postgres:5432/kestra
+        username: kestra
+        password: local-only-kestra
+        fetchType: FETCH_ONE
+        sql: |
+          select *
+          from retry_lab.acquire_permission(
+            '{{ inputs.run_id }}',
+            '{{ inputs.client_id }}'
+          );
+
+      - id: route_permission
+        type: io.kestra.plugin.core.flow.If
+        condition: >-
+          {{
+            outputs.acquire_permission.row.action == 'CALL'
+            or outputs.acquire_permission.row.action == 'PROBE'
+          }}
+        then:
+          - id: call_downstream
+            type: io.kestra.plugin.core.http.Request
+            uri: "http://mock-api:8080/coordinated-work?run_id={{ inputs.run_id }}&client_id={{ inputs.client_id }}"
+            method: GET
+            timeout: PT5S
+            options:
+              allowFailed: true
+
+          - id: record_result
+            type: io.kestra.plugin.jdbc.postgresql.Query
+            url: jdbc:postgresql://postgres:5432/kestra
+            username: kestra
+            password: local-only-kestra
+            fetchType: FETCH_ONE
+            sql: |
+              select *
+              from retry_lab.record_result(
+                '{{ inputs.run_id }}',
+                '{{ inputs.client_id }}',
+                {{ outputs.call_downstream.code }}
+              );
+        else:
+          - id: defer_attempt
+            type: io.kestra.plugin.core.flow.Sleep
+            duration: PT0.4S
+
+      - id: check_completion
+        type: io.kestra.plugin.jdbc.postgresql.Query
+        url: jdbc:postgresql://postgres:5432/kestra
+        username: kestra
+        password: local-only-kestra
+        fetchType: FETCH_ONE
+        sql: |
+          select *
+          from retry_lab.client_completed(
+            '{{ inputs.run_id }}',
+            '{{ inputs.client_id }}'
+          );

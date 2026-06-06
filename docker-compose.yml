@@ -1,0 +1,92 @@
+name: kestra-retry-storm-lab
+
+services:
+  postgres:
+    image: postgres@sha256:16bc17c64a573ef34162af9298258d1aec548232985b33ed7b1eac33ba35c229
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-kestra}
+      POSTGRES_USER: ${POSTGRES_USER:-kestra}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-local-only-kestra}
+    ports:
+      - "127.0.0.1:55432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./postgres/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+    mem_limit: 640m
+    cpus: 1.5
+    restart: unless-stopped
+
+  mock-api:
+    build:
+      context: ./mock-api
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-kestra}:${POSTGRES_PASSWORD:-local-only-kestra}@postgres:5432/${POSTGRES_DB:-kestra}
+      SERVICE_LATENCY_MS: "250"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:18080:8080"
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8080/health', timeout=2)",
+        ]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+    mem_limit: 256m
+    cpus: 1.0
+    restart: unless-stopped
+
+  kestra:
+    image: kestra/kestra@sha256:694526ebe65d2f182537c23df32861a121e1d1468a1a2c69efb4a14e714a47cb
+    user: root
+    command: server standalone --config /etc/kestra/application.yml
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-kestra}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-local-only-kestra}
+      KESTRA_USERNAME: ${KESTRA_USERNAME:-admin@kestra.io}
+      KESTRA_PASSWORD: ${KESTRA_PASSWORD:-Admin1234}
+    stop_grace_period: 2m
+    depends_on:
+      postgres:
+        condition: service_healthy
+      mock-api:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:8082:8080"
+    volumes:
+      - ./kestra/application.yml:/etc/kestra/application.yml:ro
+      - kestra_storage:/app/storage
+      - kestra_workdir:/tmp/kestra-wd
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "curl --fail --silent http://127.0.0.1:8080/ui/ >/dev/null",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 60
+      start_period: 30s
+    mem_limit: 1900m
+    cpus: 4.0
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  kestra_storage:
+  kestra_workdir:

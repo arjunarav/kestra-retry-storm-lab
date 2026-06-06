@@ -1,0 +1,15 @@
+{
+  "execution_id": "1oXfqxEQufF6MFGmKBGYEC",
+  "purpose": "Intermediate validation run that exposed the gap between SQL permit issuance and actual HTTP dispatch.",
+  "result": {
+    "capacity_exceeded_requests": 4,
+    "completed_clients": 30,
+    "failed_requests": 37,
+    "overload_cooldown_requests": 21,
+    "overload_responses": 25,
+    "peak_requests_per_second": 9,
+    "successful_requests": 30,
+    "total_requests": 67
+  },
+  "superseded_by": "results/experiment-results.json"
+}

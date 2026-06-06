@@ -1,0 +1,35 @@
+id: retry-client-independent
+namespace: retry-storm-lab
+description: One client with an execution-local exponential retry policy.
+
+inputs:
+  - id: run_id
+    type: STRING
+  - id: client_id
+    type: STRING
+
+tasks:
+  - id: call_downstream
+    type: io.kestra.plugin.core.http.Request
+    uri: "http://mock-api:8080/work?run_id={{ inputs.run_id }}&client_id={{ inputs.client_id }}"
+    method: GET
+    timeout: PT5S
+    retry:
+      type: exponential
+      interval: PT1S
+      maxInterval: PT4S
+      delayFactor: 2
+      maxAttempts: 12
+      maxDuration: PT2M
+
+  - id: mark_complete
+    type: io.kestra.plugin.jdbc.postgresql.Query
+    url: jdbc:postgresql://postgres:5432/kestra
+    username: kestra
+    password: local-only-kestra
+    sql: |
+      select retry_lab.mark_client_complete(
+        '{{ inputs.run_id }}',
+        '{{ inputs.client_id }}'
+      );
+
