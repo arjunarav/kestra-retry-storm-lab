@@ -7,109 +7,265 @@
   <style>
     :root {
       color-scheme: light;
-      --ink: #17191f;
-      --muted: #5d6573;
-      --line: #dfe3ea;
+      --ink: #12131a;
+      --muted: #626776;
+      --quiet: #8b90a0;
+      --line: #e2e4e9;
+      --line-strong: #cfd2da;
       --surface: #ffffff;
-      --code: #f6f7f9;
-      --accent: #6d36d8;
+      --surface-soft: #f6f7f9;
+      --code: #171922;
+      --code-ink: #f4f2ff;
+      --accent: #6e3bd0;
+      --accent-soft: #f1ebff;
+      --green: #18845b;
+      --orange: #d96728;
     }
     * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
     body {
       margin: 0;
-      background: #f1f3f6;
+      background: var(--surface);
       color: var(--ink);
-      font-family: Arial, Helvetica, sans-serif;
-      line-height: 1.65;
+      font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont,
+        "Segoe UI", sans-serif;
+      line-height: 1.62;
+      letter-spacing: 0;
     }
-    .topbar {
+    .progress {
+      position: fixed;
+      z-index: 20;
+      top: 0;
+      left: 0;
+      width: 0;
+      height: 3px;
+      background: var(--accent);
+    }
+    .workspace-bar {
       position: sticky;
       top: 0;
-      z-index: 5;
+      z-index: 15;
       display: flex;
-      gap: 16px;
+      min-height: 70px;
+      gap: 24px;
       align-items: center;
       justify-content: space-between;
-      padding: 14px 24px;
-      background: rgba(255, 255, 255, 0.96);
+      padding: 12px max(24px, calc((100vw - 1240px) / 2));
+      background: rgba(255, 255, 255, 0.97);
       border-bottom: 1px solid var(--line);
-      backdrop-filter: blur(10px);
+      backdrop-filter: blur(14px);
     }
-    .topbar strong { font-size: 15px; }
+    .brand {
+      display: flex;
+      min-width: 250px;
+      align-items: center;
+      gap: 11px;
+    }
+    .brand-mark {
+      position: relative;
+      width: 26px;
+      height: 26px;
+      flex: 0 0 26px;
+    }
+    .brand-mark span {
+      position: absolute;
+      width: 8px;
+      height: 8px;
+      background: var(--accent);
+      transform: rotate(45deg);
+    }
+    .brand-mark span:nth-child(1) { left: 9px; top: 0; }
+    .brand-mark span:nth-child(2) { left: 0; top: 9px; background: #9f6cf0; }
+    .brand-mark span:nth-child(3) { left: 18px; top: 9px; background: #d9589b; }
+    .brand-mark span:nth-child(4) { left: 9px; top: 18px; background: #4931a8; }
+    .brand-copy strong {
+      display: block;
+      font-size: 14px;
+      line-height: 1.2;
+    }
+    .brand-copy span {
+      display: block;
+      margin-top: 3px;
+      color: var(--muted);
+      font-size: 12px;
+    }
     .actions { display: flex; gap: 10px; flex-wrap: wrap; }
     button, a.button {
-      border: 1px solid #c9ced8;
+      display: inline-flex;
+      min-height: 38px;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid var(--line-strong);
       background: #fff;
       color: var(--ink);
-      border-radius: 7px;
-      padding: 9px 13px;
-      font: 600 14px Arial, Helvetica, sans-serif;
+      border-radius: 6px;
+      padding: 8px 12px;
+      font: 650 13px Inter, ui-sans-serif, sans-serif;
       cursor: pointer;
       text-decoration: none;
+    }
+    button:hover, a.button:hover {
+      border-color: #aeb2bd;
+      background: var(--surface-soft);
     }
     button.primary {
       background: var(--accent);
       border-color: var(--accent);
       color: white;
     }
-    main {
-      max-width: 900px;
-      margin: 32px auto 80px;
-      padding: 58px 68px;
-      background: var(--surface);
-      border: 1px solid var(--line);
-      box-shadow: 0 18px 54px rgba(30, 34, 45, 0.08);
+    button.primary:hover { background: #5f2fc2; }
+    .layout {
+      display: grid;
+      max-width: 1240px;
+      grid-template-columns: 210px minmax(0, 760px) 190px;
+      gap: 40px;
+      align-items: start;
+      margin: 0 auto;
+      padding: 52px 24px 100px;
+    }
+    .section-index, .evidence {
+      position: sticky;
+      top: 100px;
+      max-height: calc(100vh - 130px);
+      overflow-y: auto;
+      scrollbar-width: thin;
+    }
+    .rail-label {
+      margin: 0 0 14px;
+      color: var(--quiet);
+      font-size: 11px;
+      font-weight: 750;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+    .section-index nav {
+      display: grid;
+      gap: 2px;
+      border-left: 1px solid var(--line);
+    }
+    .section-index a {
+      display: block;
+      margin-left: -1px;
+      padding: 6px 0 6px 14px;
+      border-left: 2px solid transparent;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.35;
+      text-decoration: none;
+    }
+    .section-index a:hover { color: var(--ink); }
+    .section-index a.active {
+      border-left-color: var(--accent);
+      color: var(--ink);
+      font-weight: 700;
+    }
+    .article {
+      min-width: 0;
+    }
+    .article-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 9px 18px;
+      align-items: center;
+      margin-bottom: 24px;
+      padding-bottom: 18px;
+      border-bottom: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 12px;
+    }
+    .article-meta .publication {
+      color: var(--accent);
+      font-weight: 750;
+    }
+    .article-meta .validated {
+      color: var(--green);
+      font-weight: 700;
     }
     h1 {
-      margin: 0 0 28px;
-      font-family: Georgia, "Times New Roman", serif;
-      font-size: 44px;
-      line-height: 1.14;
+      max-width: 740px;
+      margin: 0 0 20px;
+      font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+      font-size: 54px;
+      line-height: 1.02;
       letter-spacing: 0;
     }
     h2 {
-      margin: 44px 0 14px;
-      font-size: 27px;
-      line-height: 1.28;
+      margin: 64px 0 18px;
+      padding-top: 8px;
+      font-size: 28px;
+      line-height: 1.18;
       letter-spacing: 0;
     }
-    h1 + h2 {
-      margin-top: 0;
+    h2.dek {
+      max-width: 720px;
+      margin: 0 0 34px;
+      padding: 0;
       color: var(--muted);
-      font-size: 22px;
-      font-weight: 500;
+      font-size: 23px;
+      font-weight: 450;
+      line-height: 1.42;
     }
-    p { margin: 0 0 20px; font-size: 18px; }
-    a { color: #5430b5; }
+    h2.dek + p {
+      margin-top: 0;
+      padding: 20px 0 20px 22px;
+      border-left: 4px solid var(--accent);
+      color: #2f243f;
+      font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+      font-size: 24px;
+      line-height: 1.42;
+    }
+    p { margin: 0 0 22px; font-size: 18px; }
+    a { color: #5930b7; }
     code {
       font-family: Menlo, Monaco, Consolas, "Liberation Mono", monospace;
-      font-size: 0.91em;
-      background: #edf0f5;
+      font-size: 0.89em;
+      background: #eef0f4;
       border-radius: 4px;
-      padding: 1px 4px;
+      padding: 2px 5px;
     }
     pre {
-      margin: 22px 0 28px;
-      padding: 20px 22px;
+      position: relative;
+      margin: 26px 0 32px;
+      padding: 44px 24px 24px;
       background: var(--code);
-      border: 1px solid var(--line);
-      border-radius: 7px;
+      border: 1px solid #282b38;
+      border-radius: 6px;
       overflow-x: auto;
       line-height: 1.5;
     }
-    pre code { background: transparent; padding: 0; font-size: 14px; }
-    figure { margin: 32px 0; }
+    pre::before {
+      content: attr(data-lang);
+      position: absolute;
+      top: 14px;
+      left: 24px;
+      color: #aaa5bd;
+      font-family: Inter, ui-sans-serif, sans-serif;
+      font-size: 10px;
+      font-weight: 750;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+    pre code {
+      background: transparent;
+      color: var(--code-ink);
+      padding: 0;
+      font-size: 13px;
+    }
+    figure {
+      width: calc(100% + 96px);
+      margin: 40px 0 42px -48px;
+    }
     figure img {
       width: 100%;
       height: auto;
-      border: 1px solid var(--line);
+      border: 1px solid var(--line-strong);
       display: block;
     }
     figcaption {
       color: var(--muted);
-      font-size: 14px;
-      margin-top: 8px;
-      text-align: center;
+      font-size: 12px;
+      margin-top: 10px;
+      text-align: left;
     }
     table {
       width: 100%;
@@ -124,8 +280,42 @@
       text-align: left;
     }
     th { background: #f4f5f8; }
-    ul, ol { margin: 0 0 24px 24px; padding: 0; font-size: 18px; }
-    li { margin: 7px 0; }
+    ul, ol { margin: 0 0 26px 22px; padding: 0; font-size: 18px; }
+    li { margin: 9px 0; padding-left: 4px; }
+    .evidence {
+      border-left: 1px solid var(--line);
+      padding-left: 18px;
+    }
+    .evidence dl { margin: 0; }
+    .evidence div {
+      padding: 0 0 16px;
+      margin: 0 0 16px;
+      border-bottom: 1px solid var(--line);
+    }
+    .evidence dt {
+      margin-bottom: 4px;
+      color: var(--quiet);
+      font-size: 10px;
+      font-weight: 750;
+      letter-spacing: .07em;
+      text-transform: uppercase;
+    }
+    .evidence dd {
+      margin: 0;
+      font-size: 14px;
+      font-weight: 700;
+      line-height: 1.35;
+    }
+    .evidence dd.good { color: var(--green); }
+    .evidence dd.alert { color: var(--orange); }
+    .repo-link {
+      display: block;
+      margin-top: 18px;
+      color: var(--accent);
+      font-size: 12px;
+      font-weight: 700;
+      text-decoration: none;
+    }
     .toast {
       position: fixed;
       right: 20px;
@@ -139,33 +329,100 @@
       transition: opacity .18s ease, transform .18s ease;
     }
     .toast.show { opacity: 1; transform: translateY(0); }
+    @media (max-width: 1080px) {
+      .layout {
+        max-width: 900px;
+        grid-template-columns: 170px minmax(0, 1fr);
+      }
+      .evidence { display: none; }
+    }
     @media (max-width: 760px) {
-      .topbar { align-items: flex-start; flex-direction: column; }
-      main { margin: 0; padding: 30px 20px 56px; border: 0; }
-      h1 { font-size: 34px; }
+      .workspace-bar {
+        position: relative;
+        align-items: flex-start;
+        flex-direction: column;
+        padding: 16px 18px;
+      }
+      .brand { min-width: 0; }
+      .actions { width: 100%; }
+      button, a.button { flex: 1 1 auto; }
+      .layout {
+        display: block;
+        padding: 34px 20px 70px;
+      }
+      .section-index { display: none; }
+      h1 { font-size: 40px; }
+      h2 { margin-top: 52px; font-size: 25px; }
+      h2.dek { font-size: 20px; }
+      h2.dek + p { font-size: 21px; }
+      p, ul, ol { font-size: 17px; }
+      figure {
+        width: 100%;
+        margin: 30px 0 34px;
+      }
+      pre {
+        width: calc(100vw - 24px);
+        margin-left: -8px;
+        border-radius: 4px;
+      }
       table { display: block; overflow-x: auto; }
     }
   </style>
 </head>
 <body>
-  <div class="topbar">
-    <strong>Kestra Engineering Medium draft</strong>
-    <div class="actions">
-      <button class="primary" id="copyRendered">Copy rendered article</button>
-      <button id="copyMarkdown">Copy markdown</button>
-      <a class="button" href="architecture.png" download>Architecture PNG</a>
-      <a class="button" href="results.png" download>Results PNG</a>
+  <div class="progress" id="progress"></div>
+  <header class="workspace-bar">
+    <div class="brand">
+      <div class="brand-mark" aria-hidden="true">
+        <span></span><span></span><span></span><span></span>
+      </div>
+      <div class="brand-copy">
+        <strong>Kestra Engineering</strong>
+        <span>Medium draft workspace</span>
+      </div>
     </div>
-  </div>
-  <main id="article" contenteditable="true">
+    <div class="actions">
+      <button class="primary" id="copyRendered">Copy article</button>
+      <button id="copyMarkdown">Markdown</button>
+      <a class="button" href="architecture.png" download>Architecture</a>
+      <a class="button" href="results.png" download>Results</a>
+    </div>
+  </header>
+  <div class="layout">
+    <aside class="section-index" aria-label="Article sections">
+      <p class="rail-label">In this story</p>
+      <nav>
+<a href="#the-experiment-contract" data-section="the-experiment-contract">The Experiment Contract</a>
+<a href="#how-the-lab-creates-a-retry-storm" data-section="how-the-lab-creates-a-retry-storm">How the Lab Creates a Retry Storm</a>
+<a href="#strategy-one-every-execution-retries-correctly" data-section="strategy-one-every-execution-retries-correctly">Strategy One: Every Execution Retries Correctly</a>
+<a href="#strategy-two-a-bulkhead-is-not-a-rate-limit" data-section="strategy-two-a-bulkhead-is-not-a-rate-limit">Strategy Two: A Bulkhead Is Not a Rate Limit</a>
+<a href="#the-shared-state-machine" data-section="the-shared-state-machine">The Shared State Machine</a>
+<a href="#the-scheduling-gap-between-a-permit-and-a-call" data-section="the-scheduling-gap-between-a-permit-and-a-call">The Scheduling Gap Between a Permit and a Call</a>
+<a href="#the-kestra-recovery-loop" data-section="the-kestra-recovery-loop">The Kestra Recovery Loop</a>
+<a href="#how-the-measurements-are-calculated" data-section="how-the-measurements-are-calculated">How the Measurements Are Calculated</a>
+<a href="#measured-results" data-section="measured-results">Measured Results</a>
+<a href="#reproduce-it" data-section="reproduce-it">Reproduce It</a>
+<a href="#where-this-design-stops" data-section="where-this-design-stops">Where This Design Stops</a>
+<a href="#what-i-would-carry-into-production" data-section="what-i-would-carry-into-production">What I Would Carry Into Production</a>
+<a href="#references" data-section="references">References</a>
+<a href="#author-note" data-section="author-note">Author Note</a>
+      </nav>
+    </aside>
+    <main class="article" id="article">
+      <div class="article-meta">
+        <span class="publication">Engineering</span>
+        <span>4,165 words</span>
+        <span>19 min read</span>
+        <span class="validated">Docker validated</span>
+      </div>
 <h1>The Retry Storm Was the Outage: Coordinating Retry Budgets in Kestra</h1>
-<h2>Thirty correct retry loops produced 231 requests for 30 successful calls. The fix required a bulkhead, a shared circuit, and durable dispatch pacing.</h2>
+<h2 class="dek">Thirty correct retry loops produced 231 requests for 30 successful calls. The fix required a bulkhead, a shared circuit, and durable dispatch pacing.</h2>
 <p>An eight-second downstream outage ended. The traffic did not.</p>
 <p>Thirty Kestra executions were each running a reasonable exponential retry policy. Every execution eventually succeeded, but together they issued 231 requests for 30 successful operations. The recovery traffic peaked at 30 requests per second against a service that could accept five. After the scheduled outage cleared, the retries produced another 70 overload responses.</p>
 <p>At that point the retry policy was the outage.</p>
 <p>This article documents a controlled failure-injection lab, not a production incident. The point was to make retry amplification visible in Kestra, compare three policies under the same conditions, and package the result so another engineer can reproduce it rather than trust a diagram.</p>
 <p>The final policy completed all 30 operations with 44 requests, held the peak to four requests per second, and produced zero overload responses. Getting there required one correction I did not expect: limiting permit issuance was insufficient because permits and actual network calls happened in different Kestra tasks.</p>
-<h2>The Experiment Contract</h2>
+<h2 id="the-experiment-contract">The Experiment Contract</h2>
 <p>I wanted a test small enough to run on a laptop and strict enough to expose coordination mistakes.</p>
 <p>The lab launches 30 Kestra Subflow executions against one fault-injection API. The API has an eight-second scheduled outage and a post-recovery capacity of five requests per second. If traffic crosses that capacity, the API enters a 1.5-second overload cooldown. Every request, response reason, circuit decision, and client completion is persisted in PostgreSQL.</p>
 <p>The three scenarios use the same client count, outage, capacity, cooldown, and provider latency:</p>
@@ -178,7 +435,7 @@
 <figure><img src="./architecture.png" alt="Architecture of the three Kestra retry-control strategies"><figcaption>Architecture of the three Kestra retry-control strategies</figcaption></figure>
 <p>The Docker package runs Kestra 1.3.21 with PostgreSQL repository and queue backends, PostgreSQL 16.14, and a Python 3.12.11 fault-injection API. The final clean run used an ARM64 Docker Engine 29.5.2 environment. Images are pinned by digest, and the mock API dependency is pinned by exact version.</p>
 <p>The code blocks below are exact excerpts from the checked-in files, not invented stand-ins. The reproduction section runs the complete YAML, SQL functions, and Python adapter together.</p>
-<h2>How the Lab Creates a Retry Storm</h2>
+<h2 id="how-the-lab-creates-a-retry-storm">How the Lab Creates a Retry Storm</h2>
 <p>Each scenario has a parent flow and a client flow. The parent creates one durable scenario row, fans out 30 child executions with <code>ForEach</code>, waits for every <code>Subflow</code>, and collects metrics only after all children terminate. The client flow contains the retry policy being tested.</p>
 <p>That split matters for the comparison. The parent workload is unchanged across scenarios. Only the client policy changes, so a lower request count cannot be explained by launching fewer clients or ending the run early. The complete parent flows are in the repository; the article concentrates on the policy code rather than printing the same 30 client values three times.</p>
 <p>The mock provider is deliberately stateful. Before <code>outage_until</code>, every request returns <code>503 scheduled_outage</code>. After that timestamp, the provider accepts at most five requests in the same wall-clock second. The sixth request returns <code>503 capacity_exceeded</code> and starts a 1.5-second cooldown. Requests arriving during the cooldown return <code>503 overload_cooldown</code>.</p>
@@ -214,7 +471,7 @@ else
 end if;</code></pre>
 <p>The scenario row is locked while this runs, so concurrent provider threads cannot each observe the same remaining capacity and all accept themselves. This makes the artificial limit deterministic enough to compare policies. It is not intended as a general-purpose rate limiter.</p>
 <p>The provider also sleeps for 250 milliseconds after recording the decision. That gives each request non-zero service time and makes the distinction between concurrency and rate visible. A service can have five active callers and still receive more than five calls in one second.</p>
-<h2>Strategy One: Every Execution Retries Correctly</h2>
+<h2 id="strategy-one-every-execution-retries-correctly">Strategy One: Every Execution Retries Correctly</h2>
 <p>The baseline client flow uses Kestra&#x27;s HTTP Request task with exponential retries:</p>
 <pre data-lang="yaml"><code>- id: call_downstream
   type: io.kestra.plugin.core.http.Request
@@ -241,7 +498,7 @@ end if;</code></pre>
 <li>18.451 seconds from scheduled recovery until the final client completed</li>
 </ul>
 <p>Local retries were correct in isolation and destructive in aggregate. That distinction is the core of the experiment.</p>
-<h2>Strategy Two: A Bulkhead Is Not a Rate Limit</h2>
+<h2 id="strategy-two-a-bulkhead-is-not-a-rate-limit">Strategy Two: A Bulkhead Is Not a Rate Limit</h2>
 <p>Kestra supports a flow-level <code>concurrency</code> property that limits how many executions of a flow may run at the same time. I added a five-execution bulkhead and queued the rest:</p>
 <pre data-lang="yaml"><code>concurrency:
   behavior: QUEUE
@@ -251,7 +508,7 @@ end if;</code></pre>
 <p>The reason is mechanical. Concurrency controls active executions, not request rate. Five executions can each finish an HTTP call in 250 milliseconds and collectively produce more than five requests in one second. They can also align their retries. A bulkhead limits how much work is in flight, but it does not define how quickly that work may cross an external boundary.</p>
 <p>The official Kestra documentation describes concurrency as a global execution limit for a flow. That is the right abstraction. Treating it as an API rate limiter would assign it a contract it does not have.</p>
 <p>The bounded execution <code>5lxH7qY7ADFEqDBXAygv1f</code> proved the useful middle ground: concurrency reduced the blast radius, but the downstream still needed coordinated recovery traffic.</p>
-<h2>The Shared State Machine</h2>
+<h2 id="the-shared-state-machine">The Shared State Machine</h2>
 <p>The third strategy adds a PostgreSQL-backed coordinator. PostgreSQL is not replacing Kestra&#x27;s orchestration. Kestra still owns the 30 child executions, loops, conditions, sleeps, HTTP tasks, and topology. PostgreSQL provides the atomic shared decision that independent executions cannot make safely in memory.</p>
 <p>The circuit state is keyed by experiment run. The schema contains the circuit, the fixed-window admission counter, the probe lease, and the dispatch cursor in one row:</p>
 <pre data-lang="sql"><code>create table retry_lab.circuit_state (
@@ -335,7 +592,7 @@ else
   returning * into v_circuit;
 end if;</code></pre>
 <p>The probe itself has a three-second lease. If its execution disappears, another client eventually observes the expired lease, returns the circuit to <code>OPEN</code>, and allows the probe election to run again. A circuit breaker without a lease can become a permanent outage when the half-open owner dies at the wrong moment.</p>
-<h2>The Scheduling Gap Between a Permit and a Call</h2>
+<h2 id="the-scheduling-gap-between-a-permit-and-a-call">The Scheduling Gap Between a Permit and a Call</h2>
 <p>My first coordinated version granted at most four permits per second in PostgreSQL and then let a later Kestra HTTP task perform the call.</p>
 <p>It looked correct in the code. It also passed one run.</p>
 <p>The clean-volume rerun failed the claim. Under a different scheduler load, permitted executions waited in Kestra and several HTTP tasks became runnable together. The coordinator had limited permit time, not network time. The downstream peak reached nine requests per second and overload returned.</p>
@@ -371,7 +628,7 @@ dispatch cursor
 <p>A fixed-window budget alone can legally grant four permits near the end of one second and four more at the beginning of the next. That is eight permits across a narrow boundary. The dispatch cursor serializes those grants onto timestamps 250 milliseconds apart, so scheduler delay cannot turn them into one burst.</p>
 <p>This is not an excuse to hide orchestration inside an HTTP service. Kestra still decides whether the call is allowed, whether an execution owns the probe, whether it should defer, and when the client is complete. The adapter enforces the final timing at the boundary where timing becomes real.</p>
 <p>In another architecture, that pacing layer could be an API gateway, a queue consumer, or a dedicated rate-limiting proxy. The important property is that admission and dispatch cannot drift apart without a second control.</p>
-<h2>The Kestra Recovery Loop</h2>
+<h2 id="the-kestra-recovery-loop">The Kestra Recovery Loop</h2>
 <p>The coordinated child flow uses <code>LoopUntil</code> to make the state machine visible:</p>
 <pre data-lang="yaml"><code>- id: coordinate_recovery
   type: io.kestra.plugin.core.flow.LoopUntil
@@ -423,7 +680,7 @@ dispatch cursor
 <p>The flow does not use the HTTP task&#x27;s automatic retry policy. A 503 is data for the coordinator, so <code>allowFailed: true</code> keeps the task successful and passes the response code into <code>record_result()</code>. The loop decides what happens next.</p>
 <p>There are two bounded waits. <code>LoopUntil</code> has a three-minute maximum and 360-iteration ceiling. A probe owner has a three-second lease, so a dead execution cannot leave the circuit stuck in <code>HALF_OPEN</code>. These are separate failure domains and need separate limits.</p>
 <p>The <code>DEFER</code> branch sleeps for 400 milliseconds before checking again. The SQL function also returns a more precise <code>wait_ms</code>, but this lab keeps the Kestra delay fixed so the YAML remains easy to inspect. A production implementation should use the returned deadline or an event-driven wake-up rather than polling every coordinator row at the same interval.</p>
-<h2>How the Measurements Are Calculated</h2>
+<h2 id="how-the-measurements-are-calculated">How the Measurements Are Calculated</h2>
 <p>All reported numbers come from PostgreSQL, not from parsing Kestra logs. The provider writes one row per actual request to <code>request_events</code>; the coordinator writes one row per decision to <code>decision_events</code>; and each client has a durable completion record.</p>
 <p>The metrics function calculates peak traffic by grouping actual provider requests into one-second buckets:</p>
 <pre data-lang="sql"><code>select coalesce(max(bucket_count), 0)
@@ -453,7 +710,7 @@ recovery delay
   final client completion time - scheduled outage end</code></pre>
 <p>Requests per success is called retry amplification in the result artifact. It is a deliberately simple workload ratio, not a universal retry-amplification formula. Every scenario had exactly 30 successful clients, so the ratio is comparable inside this experiment.</p>
 <p>Recovery delay starts when the scheduled eight-second outage ends, not when the scenario starts. That prevents the configured outage duration from making every policy look equally slow.</p>
-<h2>Measured Results</h2>
+<h2 id="measured-results">Measured Results</h2>
 <figure><img src="./results.png" alt="Measured results from the three clean Kestra executions"><figcaption>Measured results from the three clean Kestra executions</figcaption></figure>
 <p><strong>Independent retries:</strong> 231 requests, 201 failed requests, 30 peak requests per second, 7.70 requests per success, 70 overload responses, and 18.451 seconds of recovery delay.</p>
 <p><strong>Five-execution bulkhead:</strong> 100 requests, 70 failed requests, 10 peak requests per second, 3.33 requests per success, 40 overload responses, and 16.974 seconds of recovery delay.</p>
@@ -464,7 +721,7 @@ recovery delay
 <p>Compared with independent retries, the layered policy reduced total requests by about 81 percent and eliminated overload responses in the clean run. I would not generalize that percentage beyond this experiment. The useful result is the shape: local backoff amplified synchronized work, the bulkhead reduced but did not regulate it, and shared admission plus dispatch pacing kept recovery below downstream capacity.</p>
 <p>The goal was not to make the recovery path as fast as possible. It was to complete recovery without creating another outage. The layered run reserved one request per second of provider headroom and still finished sooner than either uncoordinated policy because it did not keep pushing the provider back into cooldown.</p>
 <p>The intermediate failed design is also preserved as <code>results/development-dispatch-gap.json</code>. Its execution <code>1oXfqxEQufF6MFGmKBGYEC</code> completed all clients but peaked at nine requests per second and generated 25 overload responses. Keeping a failed result in the repository is less tidy than deleting it, but it documents why the dispatch cursor exists.</p>
-<h2>Reproduce It</h2>
+<h2 id="reproduce-it">Reproduce It</h2>
 <p>The complete repository is available at <a href="https://github.com/arjunarav/kestra-retry-storm-lab" target="_blank" rel="noreferrer">github.com/arjunarav/kestra-retry-storm-lab</a>.</p>
 <p>Start the pinned stack and run all three scenarios:</p>
 <pre data-lang="bash"><code>git clone https://github.com/arjunarav/kestra-retry-storm-lab.git
@@ -496,21 +753,21 @@ from retry_lab.request_events
 where run_id = &#x27;YOUR_RUN_ID&#x27;
 group by second_bucket
 order by second_bucket;</code></pre>
-<h2>Where This Design Stops</h2>
+<h2 id="where-this-design-stops">Where This Design Stops</h2>
 <p>This is a production-shaped failure-injection package, not a drop-in production retry service.</p>
 <p>The coordinator row is scoped to one experiment run. In a real system I would key the state by downstream dependency, tenant, and possibly operation class. A single row for every dependency would serialize unrelated traffic and eventually become the bottleneck it was meant to protect.</p>
 <p>PostgreSQL is a useful coordinator here because <code>SELECT ... FOR UPDATE</code> gives the permission path a clear linearization point. It also means coordinator availability depends on the database. Production behavior must define what happens when the database is slow or unavailable: fail closed, use a degraded local budget, or route through a separate admission service. Silently falling back to unrestricted retries would be the worst option.</p>
 <p>The fixed-window budget is intentionally simple. A production limiter may need a real token bucket, sliding window, weighted permits, tenant fairness, adaptive capacity, or separate budgets for first attempts and retries. First attempts are usually more valuable than retries; making them compete in one undifferentiated bucket can punish healthy traffic.</p>
 <p>The provider adapter enforces <code>next_dispatch_at</code> by waiting before the call. That proves the timing boundary, but tying up request-handler threads is not the architecture I would use at high throughput. A queue consumer, gateway, or dedicated rate-limiting proxy can own scheduled dispatch without holding one thread per future slot.</p>
 <p>Finally, none of these controls makes a non-idempotent side effect safe. A retry budget limits volume. It does not answer whether a timed-out request committed. External writes still need idempotency keys or a query-and-reconcile path before repetition.</p>
-<h2>What I Would Carry Into Production</h2>
+<h2 id="what-i-would-carry-into-production">What I Would Carry Into Production</h2>
 <p>I would start by treating every retry as load, not as a harmless control-flow feature. Backoff belongs at the execution level, but a shared dependency also needs a shared budget. The budget should reserve headroom instead of consuming the provider&#x27;s full limit.</p>
 <p>I would keep the bulkhead even after adding a circuit breaker. They solve different problems. The bulkhead limits work in flight, the circuit stops calls during a known outage, the retry budget controls admission, and dispatch pacing handles scheduler jitter at the network boundary.</p>
 <p>I would partition coordinator rows by dependency and tenant rather than force unrelated traffic through one hot lock. PostgreSQL row locks made this lab easy to reason about, but a single global row would become its own bottleneck. Production code also needs lock timeouts, statement timeouts, coordinator metrics, retention for the decision ledger, and failover tests.</p>
 <p>I would still require provider idempotency. A retry budget controls volume; it does not make side effects safe. The checkout-saga lesson still applies: a timeout can mean unknown state, and the recovery path must query evidence before repeating a non-idempotent action.</p>
 <p>Most importantly, I would measure the time of the actual external call. The first coordinated implementation measured permit issuance and assumed the network would follow immediately. The clean rerun removed that assumption for me.</p>
 <p>Before I add a retry now, I ask two questions: who else will retry at the same time, and where is the final dispatch rate enforced?</p>
-<h2>References</h2>
+<h2 id="references">References</h2>
 <ul>
 <li><a href="https://kestra.io/docs/workflow-components/concurrency" target="_blank" rel="noreferrer">Kestra flow concurrency documentation</a></li>
 <li><a href="https://kestra.io/docs/workflow-components/retries" target="_blank" rel="noreferrer">Kestra task retries documentation</a></li>
@@ -520,9 +777,42 @@ order by second_bucket;</code></pre>
 <li><a href="https://www.postgresql.org/docs/16/explicit-locking.html" target="_blank" rel="noreferrer">PostgreSQL explicit locking</a></li>
 <li><a href="https://aws.amazon.com/builders-library/timeouts-retries-and-backoff-with-jitter/" target="_blank" rel="noreferrer">AWS Builders&#x27; Library: Timeouts, retries, and backoff with jitter</a></li>
 </ul>
-<h2>Author Note</h2>
+<h2 id="author-note">Author Note</h2>
 <p>I built and ran this lab locally in Docker, reset its volumes, and reran the complete package from the checked-in files before writing the final results. The repository includes the Kestra YAML, PostgreSQL functions, mock provider, execution runner, and measured output used in this article. I used AI assistance during drafting and implementation, then reviewed, debugged, reran, and finalized the work myself.</p>
-  </main>
+    </main>
+    <aside class="evidence" aria-label="Validation evidence">
+      <p class="rail-label">Run evidence</p>
+      <dl>
+        <div>
+          <dt>Workload</dt>
+          <dd>30 client executions</dd>
+        </div>
+        <div>
+          <dt>Independent</dt>
+          <dd class="alert">231 requests</dd>
+        </div>
+        <div>
+          <dt>Layered policy</dt>
+          <dd class="good">44 requests</dd>
+        </div>
+        <div>
+          <dt>Peak reduced</dt>
+          <dd>30 to 4 RPS</dd>
+        </div>
+        <div>
+          <dt>Overload</dt>
+          <dd class="good">70 to 0</dd>
+        </div>
+        <div>
+          <dt>Kestra</dt>
+          <dd>1.3.21</dd>
+        </div>
+      </dl>
+      <a class="repo-link"
+         href="https://github.com/arjunarav/kestra-retry-storm-lab"
+         target="_blank" rel="noreferrer">Open runnable repository</a>
+    </aside>
+  </div>
   <div class="toast" id="toast">Copied</div>
   <script>
     const markdown = `# The Retry Storm Was the Outage: Coordinating Retry Budgets in Kestra
@@ -1088,6 +1378,35 @@ I built and ran this lab locally in Docker, reset its volumes, and reran the com
 
     document.getElementById("copyRendered").addEventListener("click", copyRendered);
     document.getElementById("copyMarkdown").addEventListener("click", copyMarkdown);
+
+    const progress = document.getElementById("progress");
+    const sectionLinks = [...document.querySelectorAll("[data-section]")];
+    const sections = sectionLinks
+      .map(link => document.getElementById(link.dataset.section))
+      .filter(Boolean);
+
+    function updateProgress() {
+      const scrollable = document.documentElement.scrollHeight - innerHeight;
+      const ratio = scrollable > 0 ? scrollY / scrollable : 0;
+      progress.style.width = `${Math.min(1, Math.max(0, ratio)) * 100}%`;
+    }
+
+    const observer = new IntersectionObserver(entries => {
+      const visible = entries
+        .filter(entry => entry.isIntersecting)
+        .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)[0];
+      if (!visible) return;
+      sectionLinks.forEach(link => {
+        link.classList.toggle(
+          "active",
+          link.dataset.section === visible.target.id
+        );
+      });
+    }, { rootMargin: "-18% 0px -70% 0px" });
+
+    sections.forEach(section => observer.observe(section));
+    addEventListener("scroll", updateProgress, { passive: true });
+    updateProgress();
   </script>
 </body>
 </html>
